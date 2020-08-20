@@ -522,7 +522,7 @@ init -19 python:
         """
         loc_data_dict = dict()
 
-        with renpy.file(lookup_file) as loc_dat:
+        with renpy.file(store.awc_globals.lookup_file) as loc_dat:
             for line in loc_dat:
                 line = line.strip()
 
