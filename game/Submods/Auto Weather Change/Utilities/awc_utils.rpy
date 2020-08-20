@@ -1,12 +1,3 @@
-init -990 python in mas_submod_utils:
-    Submod(
-        author="multimokia and Legendkiller21",
-        name="Auto Atmos Change",
-        description="This submod allows Monika's room to match either the weather or the sunrise and sunset times (or both) to your own location.",
-        version="2.0.6",
-        settings_pane="auto_atmos_change_settings"
-    )
-
 init -1 python:
     tt_awc_desc = (
         "Enable this to allow {i}progressive{/i} weather to automatically match the weather at your location."
@@ -183,6 +174,10 @@ init -20 python in awc_globals:
     #Call the api key setup
     if store.awc_isInvalidAPIKey(store.persistent._awc_API_key):
         store.awc_apiKeySetup()
+
+    #Get our lookup file
+    #lookup_file = renpy.config.gamedir.replace("\\", '/') + "/Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
+    lookup_file = "/Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
 
     #Now create the open weather map object
     owm = OWM(store.persistent._awc_API_key)
@@ -526,7 +521,6 @@ init -19 python:
         Builds the lookup dict for city lookups
         """
         loc_data_dict = dict()
-        lookup_file = renpy.config.gamedir.replace("\\", '/') + "/Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
 
         with renpy.file(lookup_file) as loc_dat:
             for line in loc_dat:
