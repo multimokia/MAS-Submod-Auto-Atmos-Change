@@ -176,8 +176,7 @@ init -20 python in awc_globals:
         store.awc_apiKeySetup()
 
     #Get our lookup file
-    #lookup_file = renpy.config.gamedir.replace("\\", '/') + "/Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
-    lookup_file = "/Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
+    lookup_file = "Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
 
     #Now create the open weather map object
     owm = OWM(store.persistent._awc_API_key)
