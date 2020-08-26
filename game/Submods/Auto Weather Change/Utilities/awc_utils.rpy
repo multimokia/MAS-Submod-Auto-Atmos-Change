@@ -212,6 +212,7 @@ init -19 python:
     import datetime
     import time
     import random
+    from pyowm import timeutils
 
     def awc_isInvalidLocation(city_code, country_code=""):
         """
@@ -885,3 +886,81 @@ init -19 python:
                         return True
 
         return False
+
+    def awc_forecastByCityCountryTup(citycountry):
+        """
+        Gets the weather forecast for the location by citycountry tuple
+
+        IN:
+            citycountry - tuple of city and country
+
+        OUT:
+            three hours forecast at the given city/country
+        """
+        if not citycountry:
+            citycountry = awc_getPlayerCityCountry()
+
+        return store.awc_globals.owm.three_hours_forecast(awc_buildWeatherLocationTup(citycountry))
+
+    def awc_forecastByCoords(coords):
+        """
+        Gets the weather forecast for the location by coords
+
+        IN:
+            coords - tuple, (lat,lon)
+
+        OUT:
+            three hours forecast for the given coords
+        """
+        if not coords:
+            coords = awc_getPlayerCoords()
+
+        return store.awc_globals.owm.three_hours_forecast_at_coords(coords[0], coords[1])
+
+    def awc_get3hForecast():
+        """
+        Gets the weather forecast by player coords (if we have) or city/country (if we have)
+
+        OUT:
+            three hours forecast for player location (if we have it) or None if we don't
+        """
+        #What's preferred?
+        pref_locator = store.persistent._awc_player_location["loc_pref"]
+
+        if pref_locator == "latlon":
+            #We have player co-ords? Use that
+            if awc_hasPlayerCoords():
+                return awc_forecastByCoords(awc_getPlayerCoords())
+
+        elif pref_locator == "citycountry":
+            #We have player city and country? use that
+            if awc_hasPlayerCityCountry():
+                return awc_forecastByCityCountryTup(awc_getPlayerCityCountry())
+
+        return None
+
+    def awc_getTomorrowAverageTemp():
+        """
+        Gets tomorrow's average temperature
+
+        OUT:
+            tomorrow's average temperature for player location (if we have it) or None if we don't
+        """
+
+        time_to_check = timeutils.tomorrow(0,0)
+
+        forecast = awc_get3hForecast()
+
+        # Reset the average temperature var
+        average_temp = 0
+
+        # The forecast is returned in 3 hour blocks. We check all 8 of the day's 3 hour blocks
+        # starting from midnight and ending at 9pm
+        for i in range(7):
+            average_temp += forecast.get_weather_at(time_to_check).get_temperature(unit="celsius")["temp"]
+            time_to_check = timeutils.next_three_hours(time_to_check)
+
+        if average_temp:
+            return average_temp / 8
+
+        return None
