@@ -19,4 +19,9 @@ This submod will map the weather in MAS according to the location you're at.
 
 On a side note, if you find that there's locations missing from the menu/lookup txt file, feel free to add them by opening a [pull request](https://github.com/multimokia/MAS-Submods/compare) to this repository adding them!
 
+This submod is compatible with the [Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin/releases/latest)! Give it an install to make updating this submod easier.
+
 Just add a line in the bottom of `awc_citylookup.txt` in the following format: `city_name,country_Code,latitude,longitude,state_or_province` (you can check that file for a bunch of examples)
+
+### Please report any and all problems in the `issues` tab.
+###### Thank you
