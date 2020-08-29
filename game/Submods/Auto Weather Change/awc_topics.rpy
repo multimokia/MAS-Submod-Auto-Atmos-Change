@@ -64,7 +64,7 @@ label awc_monika_player_location:
                     #Display our scrollable
                     $ renpy.say(m, "So, which [temp_city] do you live in?", interact=False)
                     show monika at t21
-                    call screen mas_gen_scrollable_menu(awc_buildCityMenuItems(temp_city),(evhand.UNSE_X, evhand.UNSE_Y, evhand.UNSE_W, 500), evhand.UNSE_XALIGN)
+                    call screen mas_gen_scrollable_menu(awc_buildCityMenuItems(temp_city), mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
                     show monika at t11
 
                     $ latlon = _return
