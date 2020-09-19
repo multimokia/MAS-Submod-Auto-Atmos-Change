@@ -758,7 +758,7 @@ init -19 python:
             or detailed_weather_desc in store.awc_globals.SNOW_KW
         )
 
-    def awc_getTemperature(observation=None, temp="temp"):
+    def awc_getTemperature(observation=None, temp="temp", _default=None):
         """
         Checks the temperature at the player's location
 
@@ -770,6 +770,8 @@ init -19 python:
                 2) "temp": Current temperature
                 3) "temp_max": Max current temperature in the city
             (Default: "temp")
+            _default - Default value to return provided we cannot get the temperature for whatever reason
+                (Default: None)
 
             NOTE: "temp_min" and "temp_max" are optional parameters.
             Mean the min / max temperature in the city at the current moment to see deviation from current
@@ -778,6 +780,9 @@ init -19 python:
         OUT:
             The temperature depending on the provided temp value
         """
+        #If we cannot get weather, return the default value
+        if not awc_canGetAPIWeath():
+            return _default
 
         if not observation:
             observation = awc_getObservation()
