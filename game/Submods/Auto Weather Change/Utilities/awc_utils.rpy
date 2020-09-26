@@ -790,7 +790,11 @@ init -19 python:
         if not temp:
             temp = "temp"
 
-        return observation.get_weather().get_temperature(unit='celsius')[temp]
+        try:
+            return observation.get_weather().get_temperature(unit='celsius')[temp]
+        except Exception as ex:
+            store.mas_utils.writelog("[AUTO ATMOS CHANGE ERROR]: Failed to get temperature. {0}\n".format(ex))
+            return _default
 
     def awc_weatherProgress():
         """
