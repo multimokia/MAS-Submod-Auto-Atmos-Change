@@ -663,19 +663,19 @@ init -19 python:
 
     def awc_isOvercastWeather(observation=None):
         """
-        Checks if current cloud level is > 75%
+        Checks if current cloud level is >= 75%
 
         IN:
             observation - The weather observation to use to check
             NOTE: if not provided, it is acquired via the api
 
         OUT:
-            True if cloud level is > 75%
+            True if cloud level is >= 75%
         """
         if not observation:
             observation = awc_getObservation()
 
-        return observation.get_weather().get_clouds() > store.awc_globals.OVERCAST_CLOUD_THRESH
+        return observation.get_weather().get_clouds() >= store.awc_globals.OVERCAST_CLOUD_THRESH
 
     def awc_isRainWeather(observation=None):
         """
