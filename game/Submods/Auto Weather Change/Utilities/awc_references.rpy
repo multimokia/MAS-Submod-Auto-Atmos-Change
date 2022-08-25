@@ -2,9 +2,9 @@
 # FILE FOR CONTAINING ALL REFERENCE LOOKUPS #
 #############################################
 
-init -200 python in awc_utils:
+init -200 python in awc.utils:
     #Lookup table for country codes (for dlg purposes)
-    country_code_lookup = {
+    COUNTRY_CODE_LOOKUP = {
         "AF": "Afghanistan",
         "AX": "Åland Islands",
         "AL": "Albania",

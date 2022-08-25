@@ -32,28 +32,10 @@ label awc_monika_player_location:
             if not temp_city:
                 jump .enter_city_loop
 
-            if awc_isInvalidLocation(temp_city):
+            if awc.utils.checkIsInvalidLocation(temp_city):
                 m 2rsc "Hmm, I can't seem to find your city..."
-                m 4wub "But maybe I can get your location by your ip instead!"
-
-                m 1eka "Is that alright with you, [player]?{nw}"
-                $ _history_list.pop()
-                menu:
-                    m "Is that alright with you, [player]?{fast}"
-
-                    "Sure.":
-                        m 1hua "Great!"
-                        m 1dsa "Give me a second to get your location.{w=0.5}.{w=0.5}.{nw}"
-
-                        python:
-                            import geocoder
-                            awc_savePlayerLatLonTup(geocoder.ip('me').latlng)
-                            persistent._awc_player_location["loc_pref"] = "latlon"
-
-                        m 3hua "There we go!"
-
-                    "No.":
-                        call awc_monika_player_location_uncomfortable
+                m 2ekd "I'm sorry [player], I guess this just won't work."
+                m 7eka "Well either way, I'm alright with the normal weather anyway~"
 
             else:
                 if awc_hasMultipleLocations(temp_city):

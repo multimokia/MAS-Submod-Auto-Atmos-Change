@@ -1,3 +1,16 @@
+#The api key we'll use to access Open Weather Network's data
+default persistent._awc_API_key = None #TODO: REPLACE WITH API KEYS FRAMEWORK
+
+#Whether or not we have Auto Weather Change enabled
+default persistent._awc_enabled = True
+
+#Whether or not we have Auto Sun Times enabled
+default persistent._awc_ast_enabled = True
+
+init -50:
+    #Player's latitude/longitude
+    default persistent._awc_player_latlon = None
+
 init -1 python:
     tt_awc_desc = (
         "Enable this to allow {i}progressive{/i} weather to automatically match the weather at your location."
@@ -42,15 +55,6 @@ screen auto_atmos_change_settings():
             xoffset -10
             style "main_menu_version"
 
-#The api key we'll use to access Open Weather Network's data
-default persistent._awc_API_key = None
-
-#Whether or not we have Auto Weather Change enabled
-default persistent._awc_enabled = True
-
-#Whether or not we have Auto Sun Times enabled
-default persistent._awc_ast_enabled = True
-
 init -18 python:
     #Initialize the lookup
     awc_buildCityLookupDict()
@@ -60,7 +64,7 @@ init -18 python:
         store.awc_weatherProgress
     )
 
-init -10 python in awc_utils:
+init -10 python in awc.utils:
     import store
     def toggleAST():
         """
@@ -79,15 +83,12 @@ init -10 python in awc_utils:
     if (
         store.persistent._awc_ast_enabled
         and store.awc_canGetAPIWeath()
-        and store.awc_testConnection()
+        and store.testConnection()
     ):
         store.persistent._mas_sunrise = store.awc_dtToMASTime(store.awc_getSunriseDT())
         store.persistent._mas_sunset = store.awc_dtToMASTime(store.awc_getSunsetDT())
 
 init -200 python in awc_globals:
-    #Store base url in a global store
-    BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
-
     #Stores the time at which it should check whether weather should change
     weather_check_time = None
 
@@ -95,10 +96,11 @@ init -200 python in awc_globals:
     weather_offline_timeout = None
 
 # Api key setup
-init -21 python:
+init -21 python in awc.utils:
     import store
-    import urllib2
-    def awc_testURL(url):
+    import requests
+
+    def testURL(url):
         """
         Attempts to open the url provided
 
@@ -106,80 +108,79 @@ init -21 python:
             url - url to test
 
         OUT:
-            True if successful, error code if connected, but got error. False if no connection
+            True if successful, False otherwise
         """
         try:
-            urllib2.urlopen(url)
-            return True
-        except urllib2.HTTPError as e:
-            return e.code
-        except urllib2.URLError:
-            return False
-        except Exception:
+            requests.head(url, timeout=1)
+
+        except requests.ConnectionError as exc:
+            store.mas_submod_utils.submod_log.error(exc)
             return False
 
-    def awc_testConnection():
+        return True
+
+    def testConnection():
         """
         Checks if we have internet connection
 
         OUT:
             True if connection was successful, False otherwise
         """
-        return bool(awc_testURL("http://www.google.com"))
+        return testURL("http://www.google.com")
 
-    def awc_isInvalidAPIKey(api_key):
+    def checkIsinvalidAPIKey(api_key):
         """
         Checks if api key is invalid
+        NOTE: This checks against London, GB as a known location
 
         IN:
             api_key - api key to check
 
         OUT:
-            True if api key returns a 401 error (invalid), False otherwise
+            True if the request returns a 401 error (invalid), False otherwise
         """
-        return awc_testURL(store.awc_globals.BASE_URL + "appid=" + str(api_key) + "&q=London,uk") == 401
+        return requests.get(
+            BASE_URL.format(
+                lat=51.5085,
+                lon=-0.1257,
+                apikey=api_key
+            )
+        ).status_code == 401
 
-    def awc_apiKeySetup():
-        """
-        Sets up the api key from the txt file.
+    # def awc_apiKeySetup():
+    #     """
+    #     Sets up the api key from the txt file.
 
-        OUT:
-            True if api key was good. False otherwise
-        """
-        api_key = (renpy.config.basedir + '/apikey.txt').replace("\\", "/")
+    #     OUT:
+    #         True if api key was good. False otherwise
+    #     """
+    #     api_key = (renpy.config.basedir + '/apikey.txt').replace("\\", "/")
 
-        #If file isn't loadable, return
-        if not renpy.loadable(api_key):
-            return False
+    #     #If file isn't loadable, return
+    #     if not renpy.loadable(api_key):
+    #         return False
 
-        with renpy.file(api_key) as apik_data:
-            for line in apik_data:
-                line = line.strip()
+    #     with renpy.file(api_key) as apik_data:
+    #         for line in apik_data:
+    #             line = line.strip()
 
-                #Only set if api key is valid
-                if not awc_isInvalidAPIKey(line):
-                    store.persistent._awc_API_key = line
-                    return True
-        return False
+    #             #Only set if api key is valid
+    #             if not checkIsinvalidAPIKey(line):
+    #                 store.persistent._awc_API_key = line
+    #                 return True
+    #     return False
 
 init -20 python in awc_globals:
     #First append sys path here
     import sys
     import store
-    sys.path.append(renpy.config.gamedir + "/python-packages/pyowm-2.8.0-py2.7.egg")
-
-    #Let's get our weather bit
-    from pyowm import OWM
 
     #Call the api key setup
-    if store.awc_isInvalidAPIKey(store.persistent._awc_API_key):
+    if store.checkIsinvalidAPIKey(store.persistent._awc_API_key):
         store.awc_apiKeySetup()
 
     #Get our lookup file
     lookup_file = "Submods/Auto Weather Change/Utilities/awc_citylookup.txt"
-
-    #Now create the open weather map object
-    owm = OWM(store.persistent._awc_API_key)
 
     #Weather status keywords
     SUN_KW = ['clear', 'sun']
@@ -190,31 +191,27 @@ init -20 python in awc_globals:
     OVERCAST_CLOUD_THRESH = 75
     RAIN_RATE_THRESH = 3
 
-    #Depreciated
-    OVERCAST_KW = ['clouds', 'fog', 'haze', 'mist', 'light rain', 'broken clouds']
-    RAIN_KW = ['rain', 'drizzle']
 
 #NOTE: We create this dict here so we can check for existence of player location at the right init
 #If player just installed a submod requiring something being done on load
-init -20 python:
-    if not store.persistent._awc_player_location:
-        store.persistent._awc_player_location = {
-            "city": None,
-            "country": None,
-            "lat": None,
-            "lon": None,
-            "loc_pref": None
-        }
+# init -20 python:
+#     if not store.persistent._awc_player_location:
+#         store.persistent._awc_player_location = {
+#             "city": None,
+#             "country": None,
+#             "lat": None,
+#             "lon": None,
+#             "loc_pref": None
+#         }
 
 #Helper methods
-init -19 python:
+init -19 python in awc.utils:
     import store
     import datetime
     import time
     import random
-    from pyowm import timeutils
 
-    def awc_isInvalidLocation(city_code, country_code=""):
+    def checkIsInvalidLocation(city_code, country_code=""):
         """
         Checks if location is invalid
 
@@ -228,14 +225,14 @@ init -19 python:
         NOTE: It is assumed that we checked for a valid api key first, since bad api key rets False.
         """
         #First, check if valid api key
-        if awc_isInvalidAPIKey(store.persistent._awc_API_key):
+        if checkIsinvalidAPIKey(store.persistent._awc_API_key):
             return False
 
         #Now, test the url
         if not country_code:
-            return awc_testURL(store.awc_globals.BASE_URL + "appid=" + persistent._awc_API_key + "&q=" + city_code) == 404
+            return testURL(store.awc_globals.BASE_URL + "appid=" + persistent._awc_API_key + "&q=" + city_code) == 404
         else:
-            return awc_testURL(store.awc_globals.BASE_URL + "appid=" + persistent._awc_API_key + "&q=" + city_code + "," + country_code) == 404
+            return testURL(store.awc_globals.BASE_URL + "appid=" + persistent._awc_API_key + "&q=" + city_code + "," + country_code) == 404
 
     def awc_getCityCountry(city_name):
         """
@@ -263,7 +260,7 @@ init -19 python:
 
         NOTE: Assumes that city_name is a valid city
         """
-        return store.awc_utils.country_code_lookup.get(awc_getCityCountry(city_name),awc_getCityCountry(city_name))
+        return store.awc_utils.COUNTRY_CODE_LOOKUP.get(awc_getCityCountry(city_name),awc_getCityCountry(city_name))
 
     def awc_getFriendlyCountry(country_code):
         """
@@ -275,7 +272,7 @@ init -19 python:
         OUT:
             the full country name
         """
-        return store.awc_utils.country_code_lookup.get(country_code, country_code)
+        return store.awc_utils.COUNTRY_CODE_LOOKUP.get(country_code, country_code)
 
     def awc_getSunriseDT():
         """
@@ -554,7 +551,7 @@ init -19 python:
         """
         return (
             (awc_hasPlayerCityCountry() or awc_hasPlayerCoords())
-            and not awc_isInvalidAPIKey(store.persistent._awc_API_key)
+            and not checkIsinvalidAPIKey(store.persistent._awc_API_key)
         )
 
     def awc_offlineTimerCheck():
@@ -568,7 +565,7 @@ init -19 python:
         NOTE: safe bet is to call this from a function called asynchronously
         """
         #If false then we have no connection
-        if not awc_testConnection():
+        if not testConnection():
             _now = datetime.datetime.now()
 
             #If false start the timer and return false to pass
@@ -821,11 +818,11 @@ init -19 python:
             if (
                 store.persistent._awc_enabled
                 and (
-                    (awc_testConnection() and store.awc_canGetAPIWeath())
-                    or (not awc_testConnection() and store.awc_canGetAPIWeath() and not awc_offlineTimerCheck())
+                    (testConnection() and store.awc_canGetAPIWeath())
+                    or (not testConnection() and store.awc_canGetAPIWeath() and not awc_offlineTimerCheck())
                 )
             ):
-                if awc_testConnection():
+                if testConnection():
                     #We have connection and a valid url. Get weath from api
                     new_weather = store.awc_weathFromAPI()
 

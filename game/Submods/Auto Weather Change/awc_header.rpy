@@ -7,7 +7,7 @@ init -990 python in mas_submod_utils:
         settings_pane="auto_atmos_change_settings"
     )
 
-init -989 python in awc_utils:
+init -989 python in awc:
     import store
 
     #Register the updater if needed
