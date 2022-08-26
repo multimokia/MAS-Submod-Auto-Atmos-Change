@@ -13,7 +13,7 @@ init -50:
 
 init -1 python:
     tt_awc_desc = (
-        "Enable this to allow {i}progressive{/i} weather to automatically match the weather at your location."
+        "Enable this to allow progressive weather to automatically match the weather at your location."
     )
 
     tt_ast_desc = (
