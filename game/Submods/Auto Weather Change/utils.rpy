@@ -68,10 +68,7 @@ init 3 python in awc.utils:
             #If we're enabling this, we should reajust the values
             store.persistent._awc_ast_enabled = True
 
-            if (
-                store.persistent._awc_ast_enabled
-                and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
-            ):
+            if store.awc.globals.current_connectivity_status == ConnectivityState.Connected:
                 weath: WeatherInfo = getCurrentWeather()
                 store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
                 store.persistent._mas_sunset = dtToMASTime(weath.sys.get_sunset())
