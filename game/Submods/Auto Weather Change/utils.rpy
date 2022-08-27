@@ -39,7 +39,7 @@ screen auto_atmos_change_settings():
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
 
                 textbutton _("Auto Sun Times"):
-                    action Function(store.awc_utils.toggleAST)
+                    action Function(store.awc.utils.toggleAST)
                     selected persistent._awc_ast_enabled
                     hovered SetField(submods_screen_tt, "value", tt_ast_desc)
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
@@ -55,7 +55,7 @@ screen auto_atmos_change_settings():
             xoffset -10
             style "main_menu_version"
 
-init -10 python in awc.utils:
+init 3 python in awc.utils:
     import store
     def toggleAST():
         """
@@ -67,9 +67,16 @@ init -10 python in awc.utils:
         else:
             #If we're enabling this, we should reajust the values
             store.persistent._awc_ast_enabled = True
-            store.persistent._mas_sunrise = dtToMASTime(store.awc.utils.getSunriseDT())
-            store.persistent._mas_sunset = dtToMASTime(store.awc.utils.getSunsetDT())
 
+            if (
+                store.persistent._awc_ast_enabled
+                and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
+            ):
+                weath: WeatherInfo = getCurrentWeather()
+                store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
+                store.persistent._mas_sunset = dtToMASTime(weath.sys.get_sunset())
+
+    #Depends on a function defined at init 2, init 3 is the safest point we can run this
     store.awc.statemanagement.runStateChecks()
 
     if (
@@ -78,7 +85,7 @@ init -10 python in awc.utils:
     ):
         weath: WeatherInfo = getCurrentWeather()
         store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
-        store.persistent._mas_sunset = dtToMASTime(store.awc_get_sunset())
+        store.persistent._mas_sunset = dtToMASTime(weath.sys.get_sunset())
 
 
 # Api key setup
