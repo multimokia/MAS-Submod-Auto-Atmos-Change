@@ -19,6 +19,7 @@ init -18 python in mas_weather:
         #As well, if we have no connection, we fallbacks
         if (
             not store.persistent._awc_enabled
+            or not store.mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)
             or store.awc.globals.current_connectivity_status == store.awc.statemanagement.ConnectivityState.Offline
         ):
             return store.awc.utils._originalWeatherProgress()
