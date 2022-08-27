@@ -1,5 +1,6 @@
 init -20 python in awc.statemanagement:
     import datetime
+    from enum import Enum
     import store
 
     class ConnectivityState(Enum):

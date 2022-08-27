@@ -2,10 +2,10 @@
 default persistent._awc_API_key = None #TODO: REPLACE WITH API KEYS FRAMEWORK
 
 #Whether or not we have Auto Weather Change enabled
-default persistent._awc_enabled = True
+default persistent._awc_enabled = False
 
 #Whether or not we have Auto Sun Times enabled
-default persistent._awc_ast_enabled = True
+default persistent._awc_ast_enabled = False
 
 init -50:
     #Player's latitude/longitude
@@ -49,20 +49,11 @@ screen auto_atmos_change_settings():
                     xalign 1.0 yalign 0.0
                     style "main_menu_version"
 
-    if bool(persistent._awc_API_key):
+    if mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY):
         text "API Key Valid":
             xalign 1.0 yalign 0.0
             xoffset -10
             style "main_menu_version"
-
-init -18 python:
-    #Initialize the lookup
-    awc_buildCityLookupDict()
-
-    #Create our async wrapper for weather progress
-    await_weatherProgress = store.mas_threading.MASAsyncWrapper(
-        store.awc_weatherProgress
-    )
 
 init -10 python in awc.utils:
     import store
@@ -79,14 +70,15 @@ init -10 python in awc.utils:
             store.persistent._mas_sunrise = dtToMASTime(store.awc.utils.getSunriseDT())
             store.persistent._mas_sunset = dtToMASTime(store.awc.utils.getSunsetDT())
 
-    #And do the startup check here too
+    store.awc.statemanagement.runStateChecks()
+
     if (
         store.persistent._awc_ast_enabled
-        and store.awc_canGetAPIWeath()
-        and testConnection()
+        and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
     ):
-        store.persistent._mas_sunrise = dtToMASTime(store.awc_getSunriseDT())
-        store.persistent._mas_sunset = dtToMASTime(store.awc_getSunsetDT())
+        weath: WeatherInfo = getCurrentWeather()
+        store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
+        store.persistent._mas_sunset = dtToMASTime(store.awc_get_sunset())
 
 
 # Api key setup
@@ -124,7 +116,7 @@ init -21 python in awc.utils:
         """
         return testURL("http://www.google.com")
 
-    def checkIsinvalidAPIKey(api_key)- > bool:
+    def checkIsinvalidAPIKey(api_key) -> bool:
         """
         Checks if api key is invalid
         NOTE: This checks against London, GB as a known location
@@ -146,7 +138,6 @@ init -21 python in awc.utils:
 #Helper methods
 init -19 python in awc.utils:
     import store
-    from enum import Enum
     import datetime
     import time
     import random
@@ -187,7 +178,7 @@ init -19 python in awc.utils:
         rv = list()
         #TODO: We'll filter out geolocations which are within 5% of each other
         for geolocation in geolocations:
-            scrollable_list.append((
+            rv.append((
                 f"{geolocation.name}, {geolocation.country_name}",
                 geolocation,
                 False,
@@ -221,7 +212,7 @@ init -19 python in awc.utils:
             WeatherInfo for the current location, or None if api key is invalid
         """
         try:
-            return getWeatherInfoForLocation(*persistent._awc_player_latlon)
+            return getWeatherInfoForLocation(*store.persistent._awc_player_latlon)
         except requests.ConnectionError as ex:
             store.mas_submod_utils.submod_log.error(ex)
 

@@ -4,7 +4,7 @@ init 5 python:
             persistent.event_database,
             eventlabel="awc_monika_player_location",
             prompt="[player]'s location",
-            conditional="not store.awc_isInvalidAPIKey(store.persistent._awc_API_key)",
+            conditional="mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)",
             action=EV_ACT_QUEUE,
             category=["you"],
             aff_range=(mas_aff.NORMAL,None)
@@ -59,7 +59,7 @@ label awc_monika_player_location:
                     m 1wud "Wow [player].{w=0.5} It looks like you live in the only [temp_city] in the world!"
                     m 3hksdlb "Or at least from what I know, ahaha!"
                     m 1eka "Thanks for sharing where you live with me."
-                    $ player_city = found_cities[0]
+                    $ player_city = found_cities[0][1]
 
             $ persistent._awc_player_latlon = (player_city.lat, player_city.lon)
             call awc_monika_player_location_end
@@ -77,8 +77,8 @@ label awc_monika_player_location_end:
     m 1ekbfa "Thanks for helping me feel closer to your reality."
 
     #Force a weather check
-    if awc_globals.last_weather_check_dt is not None:
-        $ awc_globals.last_weather_check_dt -= datetime.timedelta(minutes=5)
+    if awc.globals.last_weather_check_dt is not None:
+        $ awc.globals.last_weather_check_dt -= datetime.timedelta(minutes=5)
     return
 
 label awc_monika_player_location_uncomfortable:
