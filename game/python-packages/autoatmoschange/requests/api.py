@@ -7,7 +7,7 @@ WEATHER_INFO_ENDPOINT = "http://api.openweathermap.org/data/2.5/weather?lat={lat
 #Geocoder url
 GEOCODE_INFO_ENDPOINT = "http://api.openweathermap.org/geo/1.0/direct?q={cityname}&limit=100&appid={apikey}"
 
-def fetch_geolocation(cityname, apikey: str) -> list[GeoLocation]:
+def fetch_geolocation(cityname: str, apikey: str) -> list[GeoLocation]:
     """
     Fetches geo info based on cityname, will return multiple values if multiple cities by the same name exist.
 
@@ -24,7 +24,8 @@ def fetch_geolocation(cityname, apikey: str) -> list[GeoLocation]:
         GEOCODE_INFO_ENDPOINT.format(
             cityname=cityname,
             apikey=apikey
-        )
+        ),
+        timeout=1
     )
 
     #Since there's likely more than one, we convert all
@@ -50,7 +51,8 @@ def fetch_weather_info(lat: float, lon: float, apikey) -> WeatherInfo:
             lat=lat,
             lon=lon,
             apikey=apikey
-        )
+        ),
+        timeout=1
     )
 
     return WeatherInfo.from_json(resp.json())

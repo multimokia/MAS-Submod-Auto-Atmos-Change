@@ -32,13 +32,16 @@ label awc_monika_player_location:
             if not temp_city:
                 jump .enter_city_loop
 
-            if awc.utils.checkIsInvalidLocation(temp_city):
+            $ found_cities = awc.utils.buildCityMenuItems(temp_city)
+            $ player_city = None #GeoLocation
+
+            if not found_cities:
                 m 2rsc "Hmm, I can't seem to find your city..."
                 m 2ekd "I'm sorry [player], I guess this just won't work."
                 m 7eka "Well either way, I'm alright with the normal weather anyway~"
 
             else:
-                if awc_hasMultipleLocations(temp_city):
+                if len(found_cities) > 1:
                     m 3hua "Great!"
                     m 3hksdlb "Well, it seems that there's more than one [temp_city] in the world..."
 
@@ -46,25 +49,19 @@ label awc_monika_player_location:
                     #Display our scrollable
                     $ renpy.say(m, "So, which [temp_city] do you live in?", interact=False)
                     show monika at t21
-                    call screen mas_gen_scrollable_menu(awc_buildCityMenuItems(temp_city), mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
+                    call screen mas_gen_scrollable_menu(found_cities, mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
                     show monika at t11
 
-                    $ latlon = _return
-                    #Now save the latlon tuple
-                    $ awc_savePlayerLatLonTup(latlon)
-                    $ persistent._awc_player_location["loc_pref"] = "latlon"
-
+                    $ player_city = _return
                     m 1hua "Thanks so much!"
 
                 else:
                     m 1wud "Wow [player].{w=0.5} It looks like you live in the only [temp_city] in the world!"
                     m 3hksdlb "Or at least from what I know, ahaha!"
-
-                    $ awc_savePlayerCityCountryTup((temp_city, awc_getCityCountry(temp_city)))
-                    $ persistent._awc_player_location["loc_pref"] = "citycountry"
-
                     m 1eka "Thanks for sharing where you live with me."
+                    $ player_city = found_cities[0]
 
+            $ persistent._awc_player_latlon = (player_city.lat, player_city.lon)
             call awc_monika_player_location_end
 
         "I'm not comfortable with that.":
@@ -80,8 +77,8 @@ label awc_monika_player_location_end:
     m 1ekbfa "Thanks for helping me feel closer to your reality."
 
     #Force a weather check
-    if awc_globals.weather_check_time is not None:
-        $ awc_globals.weather_check_time -= datetime.timedelta(minutes=5)
+    if awc_globals.last_weather_check_dt is not None:
+        $ awc_globals.last_weather_check_dt -= datetime.timedelta(minutes=5)
     return
 
 label awc_monika_player_location_uncomfortable:

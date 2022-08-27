@@ -1,4 +1,5 @@
 {
+    "renpy.warnOnUndefinedStoreVariables": false,
     "files.exclude": {
         "**/*.rpyc": true,
         "**/*.rpa": true,

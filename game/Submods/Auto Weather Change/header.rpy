@@ -1,9 +1,10 @@
 init -990 python in mas_submod_utils:
     awc_submod = Submod(
-        author="multimokia and Legendkiller21",
+        author="multimokia",
+        coauthors=["Legendkiller21"],
         name="Auto Atmos Change",
         description="This submod allows Monika's room to match either the weather or the sunrise and sunset times (or both) to your own location.",
-        version="2.0.8",
+        version="3.0.0",
         settings_pane="auto_atmos_change_settings"
     )
 
