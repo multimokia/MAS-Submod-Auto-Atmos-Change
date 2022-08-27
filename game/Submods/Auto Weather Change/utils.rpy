@@ -187,7 +187,7 @@ init -19 python in awc.utils:
 
         return rv
 
-    def getWeatherInfoForLocation(lat, long) -> WeatherInfo:
+    def getWeatherInfoForLocation(lat, lon) -> WeatherInfo:
         """
         Gets weather for the given latitude/longitude
 
