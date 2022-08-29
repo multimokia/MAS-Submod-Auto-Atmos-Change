@@ -70,8 +70,8 @@ init 3 python in awc.utils:
 
             if store.awc.globals.current_connectivity_status == ConnectivityState.Connected:
                 weath: WeatherInfo = getCurrentWeather()
-                store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
-                store.persistent._mas_sunset = dtToMASTime(weath.sys.get_sunset())
+                store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
+                store.preferencesCTX.sunset_time = dtToMASTime(weath.sys.get_sunset())
 
     #Depends on a function defined at init 2, init 3 is the safest point we can run this
     store.awc.statemanagement.runStateChecks()
@@ -81,8 +81,8 @@ init 3 python in awc.utils:
         and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
     ):
         weath: WeatherInfo = getCurrentWeather()
-        store.persistent._mas_sunrise = dtToMASTime(weath.sys.get_sunrise())
-        store.persistent._mas_sunset = dtToMASTime(weath.sys.get_sunset())
+        store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
+        store.preferencesCTX.sunset_time = dtToMASTime(weath.sys.get_sunset())
 
 
 # Api key setup
@@ -224,12 +224,33 @@ init -19 python in awc.utils:
 
     def weatherInfoToMASWeather(weath: WeatherInfo | None = None) -> store.MASWeather:
         """
-        TODO: ME
+        Parses a WeatherInfo object to a MASWeather object we can use to adjust the in-game weather
+
+        IN:
+            weath: WeatherInfo object to parse. If none, we fetch weather from API
+                (Default: None)
+
+        OUT:
+            MASWeather object representing interpreted weather
+
+        THROWS:
+            requests.ConnectionError
+            requests.Timeout
         """
         if weath is None:
             weath = getCurrentWeather()
 
-        return store.mas_weather_def
+        #We only care about the first entry here
+        inner_weath = weath.weather[0]
+
+        WEATHER_MAP = {
+            "Clear": store.mas_weather_def,
+            "Rain": store.mas_weather_rain,
+            "Snow": store.mas_weather_snow,
+            "Clouds": store.mas_weather_overcast
+        }
+
+        return WEATHER_MAP.get(inner_weath["main"], store.mas_weather_def)
 
     def weatherProgress():
         """
