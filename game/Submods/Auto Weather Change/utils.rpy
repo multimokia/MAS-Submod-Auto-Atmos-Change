@@ -103,9 +103,9 @@ init -21 python in awc.utils:
             True if successful, False otherwise
         """
         try:
-            requests.head(url, timeout=1)
+            requests.head(url, timeout=2)
 
-        except requests.ConnectionError as exc:
+        except (requests.ConnectionError, requests.ReadTimeout) as exc:
             store.mas_submod_utils.submod_log.error(exc)
             return False
 
