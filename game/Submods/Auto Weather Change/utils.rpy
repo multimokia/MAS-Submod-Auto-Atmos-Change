@@ -176,7 +176,7 @@ init -19 python in awc.utils:
             store.mas_getAPIKey(store.awc.globals.API_FEATURE_KEY)
         )
 
-        rv = list()
+        rv: list[tuple[str, str, bool, bool]] = list()
         #TODO: We'll filter out geolocations which are within 5% of each other
         for geolocation in geolocations:
             rv.append((
