@@ -129,7 +129,7 @@ init -21 python in awc.utils:
             True if the request returns a 401 error (invalid), False otherwise
         """
         return requests.get(
-            BASE_URL.format(
+            autoatmoschange.requests.api.WEATHER_INFO_ENDPOINT.format(
                 lat=51.5085,
                 lon=-0.1257,
                 apikey=api_key

@@ -7,7 +7,7 @@ init 5 python:
             conditional="mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)",
             action=EV_ACT_QUEUE,
             category=["you"],
-            aff_range=(mas_aff.NORMAL,None)
+            aff_range=(mas_aff.NORMAL, None)
         )
     )
 
@@ -88,9 +88,10 @@ label awc_monika_player_location_uncomfortable:
 
 
 ## 3.0.0 update topics
-#=====================
+#====================
 
-label awc_need_readd_apikey:
+#NOTE: No ev for this as it's exclusively a one-time block of dialogue that needs no conditions.
+label aac_need_readd_apikey:
     m 3eud "Oh I almost forgot...{w=0.3} {nw}"
     extend 3eua "I've been doing a bit of coding around here.{w=0.2} {nw}"
     extend 3rksdlb "The changes aren't {i}too{/i} big yet so there's nothing big to see ahaha~"
@@ -102,4 +103,76 @@ label awc_need_readd_apikey:
     m 3eud "You can sign up for the 'Current Weather Data' API here {a=https://openweathermap.org/api}{i}{u}here{/u}{/i}{/a}."
     m 1eub "After you do that, all I need you to do is copy the key and paste it in there for '[awc.globals.API_FEATURE_KEY]' and I should be good to go!"
     m 1hua "Thanks again, [mas_get_player_nickname()]~"
+    return
+
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="aac_reprompt_location",
+            conditional=(
+                "renpy.seen_label('multimokia_auto_atmos_change_v3_0_0') " #Seen update label
+                "and mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY) " #Has a valid API key
+                "and persistent._aac_player_latlon is None" #But has no location
+            ),
+            action=EV_ACT_QUEUE,
+            aff_range=(mas_aff.NORMAL, None),
+            rules={"no_unlock": None}
+        )
+    )
+
+label aac_reprompt_location:
+    m "Hey [player]?"
+    m "Remember before when I asked for your location so I could get the weather to match your location?"
+    m "I'm not sure what happened, but I think the note I had written it down on got corrupted..."
+
+    m "Do you think you'd be able to give me your location again?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Do you think you'd be able to give me your location again?{fast}"
+
+        "Sure, [m_name].":
+            m "Great, thanks [player]!"
+
+            label .enter_city_loop:
+            $ temp_city = renpy.input("So what city do you live in?", length=20).strip(' \t\n\r,').capitalize()
+
+            if not temp_city:
+                jump .enter_city_loop
+
+            $ found_cities = awc.utils.buildCityMenuItems(temp_city)
+            $ player_city = None #GeoLocation
+
+            if not found_cities:
+                m 2rsc "Hmm, I can't seem to find your city..."
+                m 2ekd "I'm sorry [player], I wish I noticed before I lost your original location..."
+                m 7eka "Well either way...The normal weather is good enough for me anyway~"
+
+            else:
+                if len(found_cities) > 1:
+                    m 3hua "Great!"
+                    m 3hksdlb "Well, it seems that there's more than one [temp_city] in the world..."
+
+                    show monika 1eua
+                    #Display our scrollable
+                    $ renpy.say(m, "So, which [temp_city] do you live in?", interact=False)
+                    show monika at t21
+                    call screen mas_gen_scrollable_menu(found_cities, mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
+                    show monika at t11
+
+                    $ player_city = _return
+                    m 1hua "Thanks so much!"
+
+                else:
+                    m 1wud "Oh right! You live in the only [temp_city] in the world!"
+                    m 3hksdlb "Or at least from what I'm aware of, ahaha!"
+                    m 1hua "Thanks for helping me recover that info~"
+                    $ player_city = found_cities[0][1]
+
+            $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
+            call awc_monika_player_location_end
+
+        "I'm not comfortable with that.":
+            call awc_monika_player_location_uncomfortable
     return
