@@ -1,6 +1,3 @@
-#The api key we'll use to access Open Weather Network's data
-default persistent._awc_API_key = None #TODO: REPLACE WITH API KEYS FRAMEWORK
-
 #Whether or not we have Auto Weather Change enabled
 default persistent._awc_enabled = False
 
@@ -247,7 +244,8 @@ init -19 python in awc.utils:
             "Clear": store.mas_weather_def,
             "Rain": store.mas_weather_rain,
             "Snow": store.mas_weather_snow,
-            "Clouds": store.mas_weather_overcast
+            "Clouds": store.mas_weather_overcast,
+            "Mist": store.mas_weather_overcast,
         }
 
         return WEATHER_MAP.get(inner_weath["main"], store.mas_weather_def)
@@ -291,3 +289,4 @@ init -19 python in awc.utils:
                         renpy.play("mod_assets/sounds/amb/thunder_1.wav",channel="backsound")
 
             return True
+        return False
