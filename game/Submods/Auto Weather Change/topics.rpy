@@ -61,7 +61,7 @@ label awc_monika_player_location:
                     m 1eka "Thanks for sharing where you live with me."
                     $ player_city = found_cities[0][1]
 
-            $ persistent._awc_player_latlon = (player_city.lat, player_city.lon)
+            $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
             call awc_monika_player_location_end
 
         "I'm not comfortable with that.":
@@ -84,4 +84,22 @@ label awc_monika_player_location_end:
 label awc_monika_player_location_uncomfortable:
     m 1eka "That's okay, [player], I understand."
     m 3eua "If you ever change your mind, feel free to let me know."
+    return
+
+
+## 3.0.0 update topics
+#=====================
+
+label awc_need_readd_apikey:
+    m 3eud "Oh I almost forgot...{w=0.3} {nw}"
+    extend 3eua "I've been doing a bit of coding around here.{w=0.2} {nw}"
+    extend 3rksdlb "The changes aren't {i}too{/i} big yet so there's nothing big to see ahaha~"
+    m 1hub "That doesn't mean they're not important though!{w=0.2} {nw}"
+    extend 3eua "I think they'll go a long way into keeping things more stable so I can add bigger things for us here."
+    m 3eub "If you open the settings menu, you'll notice a handy little 'API Keys' tab!"
+    m 1rksdlc "I tried to move your old key here, but for some reason I couldn't verify that it was still working..."
+    m 1eka "So just to be sure, do you think you could create a new one for me?"
+    m 3eud "You can sign up for the 'Current Weather Data' API here {a=https://openweathermap.org/api}{i}{u}here{/u}{/i}{/a}."
+    m 1eub "After you do that, all I need you to do is copy the key and paste it in there for '[awc.globals.API_FEATURE_KEY]' and I should be good to go!"
+    m 1hua "Thanks again, [mas_get_player_nickname()]~"
     return

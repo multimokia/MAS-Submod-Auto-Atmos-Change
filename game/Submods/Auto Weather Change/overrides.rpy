@@ -18,7 +18,7 @@ init -18 python in mas_weather:
         #If awc is disabled, we'll just run the original stock weatherprogress
         #As well, if we have no connection, we fallbacks
         if (
-            not store.persistent._awc_enabled
+            not store.persistent._aac_is_awc_enabled
             or not store.mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)
             or store.awc.globals.current_connectivity_status == store.awc.statemanagement.ConnectivityState.Offline
         ):

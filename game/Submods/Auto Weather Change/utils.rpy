@@ -1,12 +1,12 @@
 #Whether or not we have Auto Weather Change enabled
-default persistent._awc_enabled = False
+default persistent._aac_is_awc_enabled = False
 
 #Whether or not we have Auto Sun Times enabled
-default persistent._awc_ast_enabled = False
+default persistent._aac_is_ast_enabled = False
 
 init -50:
     #Player's latitude/longitude
-    default persistent._awc_player_latlon = None
+    default persistent._aac_player_latlon = None
 
 init -1 python:
     tt_awc_desc = (
@@ -26,18 +26,18 @@ screen auto_atmos_change_settings():
         xmaximum 1000
 
         hbox:
-            if bool(store.mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)):
+            if store.mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY) and persistent._aac_player_latlon is not None:
                 style_prefix "check"
                 box_wrap False
                 textbutton _("Auto Weather Change"):
-                    action ToggleField(persistent, "_awc_enabled")
-                    selected persistent._awc_enabled
+                    action ToggleField(persistent, "_aac_is_awc_enabled")
+                    selected persistent._aac_is_awc_enabled
                     hovered SetField(submods_screen_tt, "value", tt_awc_desc)
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
 
                 textbutton _("Auto Sun Times"):
                     action Function(store.awc.utils.toggleAST)
-                    selected persistent._awc_ast_enabled
+                    selected persistent._aac_is_ast_enabled
                     hovered SetField(submods_screen_tt, "value", tt_ast_desc)
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
 
@@ -58,12 +58,12 @@ init 3 python in awc.utils:
         """
         Toggles the auto-sun-times functionality
         """
-        if store.persistent._awc_ast_enabled:
-            store.persistent._awc_ast_enabled = False
+        if store.persistent._aac_is_ast_enabled:
+            store.persistent._aac_is_ast_enabled = False
 
         else:
             #If we're enabling this, we should reajust the values
-            store.persistent._awc_ast_enabled = True
+            store.persistent._aac_is_ast_enabled = True
 
             if store.awc.globals.current_connectivity_status == ConnectivityState.Connected:
                 weath: WeatherInfo = getCurrentWeather()
@@ -74,7 +74,7 @@ init 3 python in awc.utils:
     store.awc.statemanagement.runStateChecks()
 
     if (
-        store.persistent._awc_ast_enabled
+        store.persistent._aac_is_ast_enabled
         and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
     ):
         weath: WeatherInfo = getCurrentWeather()
@@ -133,7 +133,8 @@ init -21 python in awc.utils:
                 lat=51.5085,
                 lon=-0.1257,
                 apikey=api_key
-            )
+            ),
+            timeout=2
         ).status_code == 401
 
 #Helper methods
@@ -213,7 +214,7 @@ init -19 python in awc.utils:
             WeatherInfo for the current location, or None if api key is invalid
         """
         try:
-            return getWeatherInfoForLocation(*store.persistent._awc_player_latlon)
+            return getWeatherInfoForLocation(*store.persistent._aac_player_latlon)
         except requests.ConnectionError as ex:
             store.mas_submod_utils.submod_log.error(ex)
 
