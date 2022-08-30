@@ -65,3 +65,5 @@ label multimokia_auto_atmos_change_v3_0_0(version="v3_0_0"):
         #These now default to False
         persistent._aac_is_awc_enabled = False
         persistent._aac_is_ast_enabled = False
+
+    return
