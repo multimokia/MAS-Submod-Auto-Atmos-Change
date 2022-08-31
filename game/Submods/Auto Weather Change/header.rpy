@@ -46,7 +46,7 @@ label multimokia_auto_atmos_change_v3_0_0(version="v3_0_0"):
             #TODO: Build out a re-ask topic and queue that instead
             mas_setEVLPropValues(
                 "awc_monika_player_location",
-                conditional="mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)",
+                conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
                 action=EV_ACT_QUEUE
             )
 

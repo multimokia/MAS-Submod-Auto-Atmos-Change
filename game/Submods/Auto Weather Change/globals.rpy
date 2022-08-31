@@ -1,4 +1,4 @@
-init -200 python in awc.globals:
+init -200 python in aac.globals:
     import datetime
 
     #API Feature key for fetching the api key from MAS' APIKeys framework

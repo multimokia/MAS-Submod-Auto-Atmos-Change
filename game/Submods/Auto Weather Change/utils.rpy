@@ -26,7 +26,7 @@ screen auto_atmos_change_settings():
         xmaximum 1000
 
         hbox:
-            if store.mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY) and persistent._aac_player_latlon is not None:
+            if store.mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY) and persistent._aac_player_latlon is not None:
                 style_prefix "check"
                 box_wrap False
                 textbutton _("Auto Weather Change"):
@@ -36,7 +36,7 @@ screen auto_atmos_change_settings():
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
 
                 textbutton _("Auto Sun Times"):
-                    action Function(store.awc.utils.toggleAST)
+                    action Function(store.aac.utils.toggleAST)
                     selected persistent._aac_is_ast_enabled
                     hovered SetField(submods_screen_tt, "value", tt_ast_desc)
                     unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
@@ -46,13 +46,13 @@ screen auto_atmos_change_settings():
                     xalign 1.0 yalign 0.0
                     style "main_menu_version"
 
-    if mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY):
+    if mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY):
         text "API Key Valid":
             xalign 1.0 yalign 0.0
             xoffset -10
             style "main_menu_version"
 
-init 3 python in awc.utils:
+init 3 python in aac.utils:
     import store
     def toggleAST():
         """
@@ -65,17 +65,17 @@ init 3 python in awc.utils:
             #If we're enabling this, we should reajust the values
             store.persistent._aac_is_ast_enabled = True
 
-            if store.awc.globals.current_connectivity_status == ConnectivityState.Connected:
+            if store.aac.globals.current_connectivity_status == ConnectivityState.Connected:
                 weath: WeatherInfo = getCurrentWeather()
                 store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
                 store.preferencesCTX.sunset_time = dtToMASTime(weath.sys.get_sunset())
 
     #Depends on a function defined at init 2, init 3 is the safest point we can run this
-    store.awc.statemanagement.runStateChecks()
+    store.aac.statemanagement.runStateChecks()
 
     if (
         store.persistent._aac_is_ast_enabled
-        and store.awc.globals.current_connectivity_status == ConnectivityState.Connected
+        and store.aac.globals.current_connectivity_status == ConnectivityState.Connected
     ):
         weath: WeatherInfo = getCurrentWeather()
         store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
@@ -83,7 +83,7 @@ init 3 python in awc.utils:
 
 
 # Api key setup
-init -21 python in awc.utils:
+init -21 python in aac.utils:
     import store
     import requests
     import autoatmoschange
@@ -138,12 +138,12 @@ init -21 python in awc.utils:
         ).status_code == 401
 
 #Helper methods
-init -19 python in awc.utils:
+init -19 python in aac.utils:
     import store
     import datetime
     import time
     import random
-    from store.awc.statemanagement import ConnectivityState
+    from store.aac.statemanagement import ConnectivityState
 
     #Keep a reference to the original weatherProgress function as we intend to extend its functionality vs replace it.
     _originalWeatherProgress = store.mas_weather.weatherProgress
@@ -170,11 +170,11 @@ init -19 python in awc.utils:
         OUT:
             list of display names for the city in the form for a scrollable menu
 
-        ASSUMES: There is an API key registered for the key stored in awc.globals.API_FEATURE_KEY
+        ASSUMES: There is an API key registered for the key stored in aac.globals.API_FEATURE_KEY
         """
         geolocations: list[GeoLocation] = autoatmoschange.requests.api.fetch_geolocation(
             city_name,
-            store.mas_getAPIKey(store.awc.globals.API_FEATURE_KEY)
+            store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
         )
 
         rv: list[tuple[str, str, bool, bool]] = list()
@@ -203,7 +203,7 @@ init -19 python in awc.utils:
         return autoatmoschange.requests.api.fetch_weather_info(
             lat,
             lon,
-            store.mas_getAPIKey(store.awc.globals.API_FEATURE_KEY)
+            store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
         )
 
     def getCurrentWeather() -> WeatherInfo | None:
@@ -251,21 +251,21 @@ init -19 python in awc.utils:
 
         return WEATHER_MAP.get(inner_weath["main"], store.mas_weather_def)
 
-    def weatherProgress():
+    def weatherProgress() -> bool:
         """
         Extension for weatherProgress, building in the auto atmos behaviour
         """
         #Otherwise we do stuff
         if (
             store.mas_timePastSince(
-                store.awc.globals.last_weather_check_dt,
-                store.awc.globals.WEATHER_CHECK_INTERVAL
+                store.aac.globals.last_weather_check_dt,
+                store.aac.globals.WEATHER_CHECK_INTERVAL
             )
         ):
-            store.awc.globals.last_weather_check_dt = datetime.datetime.now() + store.awc.globals.WEATHER_CHECK_INTERVAL
+            store.aac.globals.last_weather_check_dt = datetime.datetime.now() + store.aac.globals.WEATHER_CHECK_INTERVAL
 
             #In the case we're waiting for a reconnect, simply hold off.
-            if store.awc.globals.current_connectivity_status == ConnectivityState.AwaitingReconnect:
+            if store.aac.globals.current_connectivity_status == ConnectivityState.AwaitingReconnect:
                 return False
 
             #We can't get here if we're offline, therefore we must be connected!
@@ -291,3 +291,20 @@ init -19 python in awc.utils:
 
             return True
         return False
+
+init 1 python in aac.utils:
+    #Extending shouldRain as well, we should preserve this reference
+    _originalShouldRain = store.mas_shouldRain
+
+    def shouldRainPatch() -> store.MASWeather:
+        """
+        Patch for mas_shouldRain which does auto atmos things
+        """
+        if (
+            store.persistent._aac_is_awc_enabled
+            and store.aac.globals.current_connectivity_status == ConnectivityState.Connected
+        ):
+            return weatherInfoToMASWeather(getCurrentWeather())
+
+        else:
+            _originalShouldRain()

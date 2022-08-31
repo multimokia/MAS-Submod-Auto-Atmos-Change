@@ -4,7 +4,7 @@ init 5 python:
             persistent.event_database,
             eventlabel="awc_monika_player_location",
             prompt="[player]'s location",
-            conditional="mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY)",
+            conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
             action=EV_ACT_QUEUE,
             category=["you"],
             aff_range=(mas_aff.NORMAL, None)
@@ -113,7 +113,7 @@ init 5 python:
             eventlabel="aac_reprompt_location",
             conditional=(
                 "renpy.seen_label('multimokia_auto_atmos_change_v3_0_0') " #Seen update label
-                "and mas_hasAPIKey(store.awc.globals.API_FEATURE_KEY) " #Has a valid API key
+                "and mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY) " #Has a valid API key
                 "and persistent._aac_player_latlon is None" #But has no location
             ),
             action=EV_ACT_QUEUE,

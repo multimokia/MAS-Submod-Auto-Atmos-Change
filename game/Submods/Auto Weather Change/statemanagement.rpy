@@ -1,4 +1,4 @@
-init -20 python in awc.statemanagement:
+init -20 python in aac.statemanagement:
     import datetime
     from enum import Enum
     import store
@@ -16,30 +16,30 @@ init -20 python in awc.statemanagement:
         """
         Checks whether we should start or reset the offline timer and whether we timed out
         """
-        if not store.awc.utils.testConnection():
+        if not store.aac.utils.testConnection():
             _now = datetime.datetime.now()
-            store.awc.globals.current_connectivity_status = ConnectivityState.Offline
+            store.aac.globals.current_connectivity_status = ConnectivityState.Offline
 
             #We setup a timeout here. If this is passed, we should fallback to stock behaviour.
             if (
                 store.mas_timePastSince(
-                    store.awc.globals.weather_offline_timeout_dt,
+                    store.aac.globals.weather_offline_timeout_dt,
                     datetime.timedelta(minutes=30),
                     _now
                 )
             ):
-                if store.awc.globals.weather_offline_timeout_dt is None:
-                    store.awc.globals.weather_offline_timeout_dt = _now + datetime.timedelta(minutes=30)
-                    store.awc.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
+                if store.aac.globals.weather_offline_timeout_dt is None:
+                    store.aac.globals.weather_offline_timeout_dt = _now + datetime.timedelta(minutes=30)
+                    store.aac.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
 
                 else:
-                    store.awc.globals.current_connectivity_status = ConnectivityState.Offline
+                    store.aac.globals.current_connectivity_status = ConnectivityState.Offline
 
             #We need to set this to AwaitingReconnect here to avoid getting caught in Offline forever
-            elif store.awc.globals.weather_offline_timeout_dt is not None:
-                store.awc.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
+            elif store.aac.globals.weather_offline_timeout_dt is not None:
+                store.aac.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
 
         else:
             #Timeout is no longer necessary
-            store.awc.globals.weather_offline_timeout_dt = None
-            store.awc.globals.current_connectivity_status = ConnectivityState.Connected
+            store.aac.globals.weather_offline_timeout_dt = None
+            store.aac.globals.current_connectivity_status = ConnectivityState.Connected
