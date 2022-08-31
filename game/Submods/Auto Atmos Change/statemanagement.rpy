@@ -1,9 +1,9 @@
 init -20 python in aac.statemanagement:
     import datetime
-    from enum import IntFlag
+    import enum
     import store
 
-    class ConnectivityState(IntFlag):
+    class ConnectivityState(enum.Flag):
         """
         Enum representing connectivity
         """
