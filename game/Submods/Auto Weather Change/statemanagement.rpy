@@ -35,6 +35,10 @@ init -20 python in awc.statemanagement:
                 else:
                     store.awc.globals.current_connectivity_status = ConnectivityState.Offline
 
+            #We need to set this to AwaitingReconnect here to avoid getting caught in Offline forever
+            elif store.awc.globals.weather_offline_timeout_dt is not None:
+                store.awc.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
+
         else:
             #Timeout is no longer necessary
             store.awc.globals.weather_offline_timeout_dt = None
