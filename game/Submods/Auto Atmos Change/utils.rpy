@@ -65,7 +65,7 @@ init 3 python in aac.utils:
             #If we're enabling this, we should reajust the values
             store.persistent._aac_is_ast_enabled = True
 
-            if store.aac.globals.current_connectivity_status == ConnectivityState.Connected:
+            if store.aac.globals.current_connectivity_state == ConnectivityState.Connected:
                 weath: WeatherInfo = getCurrentWeather()
                 store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
                 store.preferencesCTX.sunset_time = dtToMASTime(weath.sys.get_sunset())
@@ -75,7 +75,7 @@ init 3 python in aac.utils:
 
     if (
         store.persistent._aac_is_ast_enabled
-        and store.aac.globals.current_connectivity_status == ConnectivityState.Connected
+        and store.aac.globals.current_connectivity_state == ConnectivityState.Connected
     ):
         weath: WeatherInfo = getCurrentWeather()
         store.preferencesCTX.sunrise_time = dtToMASTime(weath.sys.get_sunrise())
@@ -265,7 +265,7 @@ init -19 python in aac.utils:
             store.aac.globals.last_weather_check_dt = datetime.datetime.now() + store.aac.globals.WEATHER_CHECK_INTERVAL
 
             #In the case we're waiting for a reconnect, simply hold off.
-            if store.aac.globals.current_connectivity_status == ConnectivityState.AwaitingReconnect:
+            if store.aac.globals.current_connectivity_state == ConnectivityState.AwaitingReconnect:
                 return False
 
             #We can't get here if we're offline, therefore we must be connected!
@@ -302,7 +302,7 @@ init 1 python in aac.utils:
         """
         if (
             store.persistent._aac_is_awc_enabled
-            and store.aac.globals.current_connectivity_status == ConnectivityState.Connected
+            and store.aac.globals.current_connectivity_state == ConnectivityState.Connected
         ):
             return weatherInfoToMASWeather(getCurrentWeather())
 

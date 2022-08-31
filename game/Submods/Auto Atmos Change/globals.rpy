@@ -8,7 +8,7 @@ init -200 python in aac.globals:
     WEATHER_CHECK_INTERVAL = datetime.timedelta(minutes=5)
 
     #Current connection state
-    current_connectivity_status = None
+    current_connectivity_state = None
 
     #Stores the time at which it should check whether weather should change
     last_weather_check_dt = None

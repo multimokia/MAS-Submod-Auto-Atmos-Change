@@ -20,7 +20,7 @@ init -18 python in mas_weather:
         if (
             not store.persistent._aac_is_awc_enabled
             or not store.mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)
-            or store.aac.globals.current_connectivity_status == store.aac.statemanagement.ConnectivityState.Offline
+            or store.aac.globals.current_connectivity_state == store.aac.statemanagement.ConnectivityState.Offline
         ):
             return store.aac.utils._originalWeatherProgress()
 

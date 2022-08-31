@@ -18,7 +18,7 @@ init -20 python in aac.statemanagement:
         """
         if not store.aac.utils.testConnection():
             _now = datetime.datetime.now()
-            store.aac.globals.current_connectivity_status = ConnectivityState.Offline
+            store.aac.globals.current_connectivity_state = ConnectivityState.Offline
 
             #We setup a timeout here. If this is passed, we should fallback to stock behaviour.
             if (
@@ -30,16 +30,16 @@ init -20 python in aac.statemanagement:
             ):
                 if store.aac.globals.weather_offline_timeout_dt is None:
                     store.aac.globals.weather_offline_timeout_dt = _now + datetime.timedelta(minutes=30)
-                    store.aac.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
+                    store.aac.globals.current_connectivity_state = ConnectivityState.AwaitingReconnect
 
                 else:
-                    store.aac.globals.current_connectivity_status = ConnectivityState.Offline
+                    store.aac.globals.current_connectivity_state = ConnectivityState.Offline
 
             #We need to set this to AwaitingReconnect here to avoid getting caught in Offline forever
             elif store.aac.globals.weather_offline_timeout_dt is not None:
-                store.aac.globals.current_connectivity_status = ConnectivityState.AwaitingReconnect
+                store.aac.globals.current_connectivity_state = ConnectivityState.AwaitingReconnect
 
         else:
             #Timeout is no longer necessary
             store.aac.globals.weather_offline_timeout_dt = None
-            store.aac.globals.current_connectivity_status = ConnectivityState.Connected
+            store.aac.globals.current_connectivity_state = ConnectivityState.Connected
