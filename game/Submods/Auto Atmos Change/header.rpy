@@ -1,5 +1,5 @@
 init -990 python in mas_submod_utils:
-    awc_submod = Submod(
+    aac_submod = Submod(
         author="multimokia",
         coauthors=["Legendkiller21"],
         name="Auto Atmos Change",
@@ -12,13 +12,13 @@ init -990 python in mas_submod_utils:
         }
     )
 
-init -989 python in awc:
+init -989 python in aac:
     import store
 
     #Register the updater if needed
     if store.mas_submod_utils.isSubmodInstalled("Submod Updater Plugin"):
         store.sup_utils.SubmodUpdater(
-            submod=store.mas_submod_utils.awc_submod,
+            submod=store.mas_submod_utils.aac_submod,
             user_name="multimokia",
             repository_name="MAS-Submod-Auto-Atmos-Change",
             tag_formatter=lambda x: x[x.index('_') + 1:],
