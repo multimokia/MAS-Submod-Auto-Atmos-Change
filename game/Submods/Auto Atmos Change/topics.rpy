@@ -123,17 +123,17 @@ init 5 python:
     )
 
 label aac_reprompt_location:
-    m "Hey [player]?"
-    m "Remember before when I asked for your location so I could get the weather to match your location?"
-    m "I'm not sure what happened, but I think the note I had written it down on got corrupted..."
+    m 2euc "Hey [player]?"
+    m 2rkc "Remember before when I asked for your location so I could get the weather to match your location?"
+    m 2ekd "I'm not sure what happened, but I think the note I had written it down on got corrupted..."
 
-    m "Do you think you'd be able to give me your location again?{nw}"
+    m 2ekc "Do you think you'd be able to give me your location again?{nw}"
     $ _history_list.pop()
     menu:
         m "Do you think you'd be able to give me your location again?{fast}"
 
         "Sure, [m_name].":
-            m "Great, thanks [player]!"
+            m 7hua "Great, thanks [player]!"
 
             label .enter_city_loop:
             $ temp_city = renpy.input("So what city do you live in?", length=20).strip(' \t\n\r,').capitalize()
