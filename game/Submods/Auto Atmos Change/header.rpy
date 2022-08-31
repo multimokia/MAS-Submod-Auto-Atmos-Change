@@ -35,39 +35,38 @@ label multimokia_auto_atmos_change_v2_0_8(version="v2_0_8"):
 label multimokia_auto_atmos_change_v3_0_0(version="v3_0_0"):
     python:
         #Attempt to migrate latlon from old vars
+        #NOTE: If the transfer fails, a topic where Monika asks the player for their location again will be pushed
+        #once a working API key has been added
         if (
             persistent._awc_player_location.get("lat")
             and persistent._awc_player_location.get("lon")
         ):
             persistent._aac_player_latlon = (persistent._awc_player_location["lat"], persistent._awc_player_location["lon"])
 
-        else:
-            #We need to re-prompt for location. We'll recondition the setup topic for now
-            #TODO: Build out a re-ask topic and queue that instead
-            mas_setEVLPropValues(
-                "awc_monika_player_location",
-                conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
-                action=EV_ACT_QUEUE
-            )
+        #In the case the initial setup topic was not seen for some reason, we should update its conditional as we have new checks
+        with MAS_EVL("awc_monika_player_location") as aac_setup_evl:
+            if aac_setup_evl.conditional is not None:
+                aac_setup_evl.conditional = "mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)"
+                aac_setup_evl.action = EV_ACT_QUEUE
 
         #Check if the apikey is invalid
         try:
-            if awc.utils.checkIsinvalidAPIKey(persistent._awc_api_key):
+            if aac.utils.checkIsinvalidAPIKey(persistent._awc_API_key):
                 #Queue a topic saying the player needs to re-add their api key
                 queueEvent("aac_need_readd_apikey")
 
-        except (awc.utils.requests.ConnectionError, awc.utils.requests.ReadTimeout) as ex:
+        except (aac.utils.requests.ConnectionError, aac.utils.requests.ReadTimeout) as ex:
             #We can't trust the result here, we don't know if the API key is valid
             store.mas_submod_utils.submod_log.error(f"Failed to validate API key: {ex}")
             queueEvent("aac_need_readd_apikey")
 
-        #_awc_api_key is deprecated with the API keys system
-        safeDel("_awc_api_key")
+        #_awc_API_key is deprecated with the API keys system
+        safeDel("_awc_API_key")
         #_awc_player_location has been condensed down to a simple latlon tuple
         safeDel("_awc_player_location")
-
-        #These now default to False
-        persistent._aac_is_awc_enabled = False
-        persistent._aac_is_ast_enabled = False
+        #_awc_enabled has been replaced to prevent crashloads and clean up ownership prefixes
+        safeDel("_awc_enabled")
+        #_awc_ast_enabled has also been replaced to prevent crashloads and clean up ownership
+        safeDel("_awc_ast_enabled")
 
     return

@@ -11,6 +11,7 @@ init 5 python:
         )
     )
 
+#NOTE: For historical reasons, this topic retains the awc_ prefix
 label awc_monika_player_location:
     m 3eua "Hey, [player]?"
     m 1eka "I've always wondered what it'd be like to live where you do."
@@ -32,7 +33,7 @@ label awc_monika_player_location:
             if not temp_city:
                 jump .enter_city_loop
 
-            $ found_cities = awc.utils.buildCityMenuItems(temp_city)
+            $ found_cities = aac.utils.buildCityMenuItems(temp_city)
             $ player_city = None #GeoLocation
 
             if not found_cities:
@@ -62,26 +63,26 @@ label awc_monika_player_location:
                     $ player_city = found_cities[0][1]
 
             $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
-            call awc_monika_player_location_end
+            call aac_monika_player_location_end
 
         "I'm not comfortable with that.":
-            call awc_monika_player_location_uncomfortable
+            call aac_monika_player_location_uncomfortable
 
     #Just for safety
     $ mas_unlockEVL("awc_monika_player_location", "EVE")
     return
 
-label awc_monika_player_location_end:
+label aac_monika_player_location_end:
     m 3hua "It'll be like I'm living above you, ahaha!"
     m 3eua "The weather should change to be pretty close to what it is where you are, [player]."
     m 1ekbfa "Thanks for helping me feel closer to your reality."
 
     #Force a weather check
-    if awc.globals.last_weather_check_dt is not None:
-        $ awc.globals.last_weather_check_dt -= datetime.timedelta(minutes=5)
+    if aac.globals.last_weather_check_dt is not None:
+        $ aac.globals.last_weather_check_dt -= datetime.timedelta(minutes=5)
     return
 
-label awc_monika_player_location_uncomfortable:
+label aac_monika_player_location_uncomfortable:
     m 1eka "That's okay, [player], I understand."
     m 3eua "If you ever change your mind, feel free to let me know."
     return
@@ -101,7 +102,7 @@ label aac_need_readd_apikey:
     m 1rksdlc "I tried to move your old key here, but for some reason I couldn't verify that it was still working..."
     m 1eka "So just to be sure, do you think you could create a new one for me?"
     m 3eud "You can sign up for the 'Current Weather Data' API here {a=https://openweathermap.org/api}{i}{u}here{/u}{/i}{/a}."
-    m 1eub "After you do that, all I need you to do is copy the key and paste it in there for '[awc.globals.API_FEATURE_KEY]' and I should be good to go!"
+    m 1eub "After you do that, all I need you to do is copy the key and paste it in there for '[aac.globals.API_FEATURE_KEY]' and I should be good to go!"
     m 1hua "Thanks again, [mas_get_player_nickname()]~"
     return
 
@@ -141,7 +142,7 @@ label aac_reprompt_location:
             if not temp_city:
                 jump .enter_city_loop
 
-            $ found_cities = awc.utils.buildCityMenuItems(temp_city)
+            $ found_cities = aac.utils.buildCityMenuItems(temp_city)
             $ player_city = None #GeoLocation
 
             if not found_cities:
@@ -171,8 +172,8 @@ label aac_reprompt_location:
                     $ player_city = found_cities[0][1]
 
             $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
-            call awc_monika_player_location_end
+            call aac_monika_player_location_end
 
         "I'm not comfortable with that.":
-            call awc_monika_player_location_uncomfortable
+            call aac_monika_player_location_uncomfortable
     return
