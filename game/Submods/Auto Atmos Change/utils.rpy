@@ -239,14 +239,32 @@ init -19 python in aac.utils:
             weath = getCurrentWeather()
 
         #We only care about the first entry here
-        inner_weath = weath.weather[0]
+        inner_weath = weath.weather[0] #SimpleWeatherInfo
+
+        #Clouds have special handling due to MAS clouds being very dense
+        #If the cloud cover isn't above the threshold, we'll use clear
+        if (
+            inner_weath["main"] in ("Clouds", "Mist")
+            and weath.clouds.get("all", 0) >= store.aac.globals.OVERCAST_CLOUD_THRESH
+        ):
+            return store.mas_weather_overcast
+
+        #Rain too, has special handling due to how heavy MAS rain is
+        elif inner_weath["main"] == "Rain":
+            hourly_rain_rate = 0
+
+            if "3h" in weath.rain:
+                hourly_rain_rate = weath.rain["3h"] / 3
+
+            elif "1h" in weath.rain:
+                hourly_rain_rate = weath.rain["1h"]
+
+            if hourly_rain_rate >= store.aac.globals.RAIN_RATE_THRESH:
+                return store.mas_weather_rain
 
         WEATHER_MAP = {
             "Clear": store.mas_weather_def,
-            "Rain": store.mas_weather_rain,
             "Snow": store.mas_weather_snow,
-            "Clouds": store.mas_weather_overcast,
-            "Mist": store.mas_weather_overcast,
         }
 
         return WEATHER_MAP.get(inner_weath["main"], store.mas_weather_def)
