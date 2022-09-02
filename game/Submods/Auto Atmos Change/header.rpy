@@ -43,6 +43,14 @@ label multimokia_auto_atmos_change_v3_0_0(version="v3_0_0"):
         ):
             persistent._aac_player_latlon = (persistent._awc_player_location["lat"], persistent._awc_player_location["lon"])
 
+            #Since we've presumably had a location for a while now
+            mas_setEVLPropValues(
+                "aac_add_more_locations_intro",
+                conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
+                action=EV_ACT_QUEUE,
+                start_date=datetime.date.today()
+            )
+
         #In the case the initial setup topic was not seen for some reason, we should update its conditional as we have new checks
         with MAS_EVL("awc_monika_player_location") as aac_setup_evl:
             if aac_setup_evl.conditional is not None:

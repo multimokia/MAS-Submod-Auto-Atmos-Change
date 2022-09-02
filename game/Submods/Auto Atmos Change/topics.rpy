@@ -63,6 +63,16 @@ label awc_monika_player_location:
                     $ player_city = found_cities[0][1]
 
             $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
+
+            #We should only do this on first viewing of this topic
+            if mas_getEVL_shown_count("awc_monika_player_location") == 0:
+                $ mas_setEVLPropValues(
+                    "aac_add_more_locations_intro",
+                    conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
+                    action=EV_ACT_QUEUE,
+                    start_date=datetime.date.today() + datetime.timedelta(days=1)
+                )
+
             call aac_monika_player_location_end
 
         "I'm not comfortable with that.":
@@ -172,8 +182,59 @@ label aac_reprompt_location:
                     $ player_city = found_cities[0][1]
 
             $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
-            call aac_monika_player_location_end
+
+            #Set up a topic for tomorrow
+            $ mas_setEVLPropValues(
+                "aac_add_more_locations_intro",
+                conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
+                action=EV_ACT_QUEUE,
+                start_date=datetime.date.today() + datetime.timedelta(days=1)
+            )
+            return
 
         "I'm not comfortable with that.":
             call aac_monika_player_location_uncomfortable
+    return
+
+#new locations dialogue, should prompt on a new session once she has location
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="aac_add_more_locations_intro",
+            rules={"no_unlock": None},
+            aff_range=(mas_aff.NORMAL, None)
+        )
+    )
+
+label aac_add_more_locations_intro:
+    m "You know, [player], I was thinking..."
+    m "I asked you for your location before so that the weather here could be the same as where you are."
+    m "But now that I think about it, maybe sometimes your home isn't the only place you want to be."
+    m "I might not be able to whisk you away to your dream vacation destination, but we could see what the weather is like there!"
+    m "I know, just pretending to be there is a little silly, but I think it would be sort of magical if it was with you."
+    m "Just let me know if you'd like to add some locations to the list, okay? They can be anywhere you like."
+
+    $ mas_unlockEVL("aac_check_weather_elsewhere", "EVE")
+    return "no_unlock"
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="aac_check_weather_elsewhere",
+            prompt="Can we check the weather in another location?",
+            pool=True,
+            rules={"no_unlock": None}
+        )
+    )
+
+label aac_check_weather_elsewhere:
+    m "Sure!"
+
+    #TODO: This
+    #if there are locations listed
+    m "If there's anything you don't want to track anymore, deselect it."
+    #done
+    m "Do we want to add a new location to track?"
     return
