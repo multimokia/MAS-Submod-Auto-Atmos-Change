@@ -241,7 +241,16 @@ init -19 python in aac.utils:
         #We only care about the first entry here
         inner_weath = weath.weather[0] #SimpleWeatherInfo
 
-        #Rain has special handling due to how heavy MAS rain is. If it's below a rate thresh, we should refine our search
+        #As an approach to filter, we check the following order:
+        # 1. Thunder
+        # 2. Rain
+        # 3. Snow
+        # 4. Overcast
+        # 5. Def
+
+        if inner_weath["main"] in store.aac.globals.THUNDER_KW:
+            return store.mas_weather_thunder
+
         if inner_weath["main"] == "Rain":
             hourly_rain_rate = 0
 
@@ -254,25 +263,13 @@ init -19 python in aac.utils:
             if hourly_rain_rate >= store.aac.globals.RAIN_RATE_THRESH:
                 return store.mas_weather_rain
 
-        #Clouds have special handling due to MAS clouds being very dense
-        #If the cloud cover isn't above the threshold, we'll go for the rest
-        if (
-            inner_weath["main"] in ("Clouds", "Mist")
-            and weath.clouds.get("all", 0) >= store.aac.globals.OVERCAST_CLOUD_THRESH
-        ):
+        if inner_weath["main"] in store.aac.globals.SNOW_KW:
+            return store.mas_weather_snow
+
+        if weath.clouds.get("all", 0) >= store.aac.globals.OVERCAST_CLOUD_THRESH:
             return store.mas_weather_overcast
 
-        WEATHER_MAP = {
-            "Clear": store.mas_weather_def,
-            "Snow": store.mas_weather_snow,
-            "Sleet": store.mas_weather_snow,
-            "Storm": store.mas_weather_thunder,
-            "Hurricane": store.mas_weather_thunder,
-            "tornado": store.mas_weather_thunder,
-            "thunderstorm": store.mas_weather_thunder
-        }
-
-        return WEATHER_MAP.get(inner_weath["main"], store.mas_weather_def)
+        return store.mas_weather_def
 
     def weatherProgress() -> bool:
         """
