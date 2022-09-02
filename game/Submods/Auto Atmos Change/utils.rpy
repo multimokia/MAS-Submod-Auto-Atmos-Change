@@ -200,11 +200,14 @@ init -19 python in aac.utils:
         OUT:
             WeatherInfo for the weather at the given location
         """
-        return autoatmoschange.requests.api.fetch_weather_info(
-            lat,
-            lon,
-            store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
+        return (
+            autoatmoschange.requests.api.fetch_weather_info(
+                lat,
+                lon,
+                store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
+            )
         )
+
 
     def getCurrentWeather() -> WeatherInfo | None:
         """
@@ -215,8 +218,10 @@ init -19 python in aac.utils:
         """
         try:
             return getWeatherInfoForLocation(*store.persistent._aac_player_latlon)
-        except requests.ConnectionError as ex:
-            store.mas_submod_utils.submod_log.error(ex)
+
+        except (requests.ConnectionError, requests.ReadTimeout) as ex:
+            store.mas_submod_utils.submod_log.error(f"Failed to getWeatherInfoForLocation: {ex}")
+
 
         return None
 
