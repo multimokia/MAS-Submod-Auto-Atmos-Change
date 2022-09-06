@@ -244,13 +244,7 @@ init 5 python:
 default persistent._aac_stored_locations = dict() #dict[str, tuple(float, float)] | None
 
 label aac_check_weather_elsewhere:
-    if not persistent._aac_stored_locations:
-        m 1wuo "Oh!{w=0.2} {nw}"
-        extend 3hksdlb "Looks like we don't have any locations to check..."
-        m 3eua "Why don't we add some?"
-        call aac_check_weather_elsewhere_add_location
-
-    #We have locations configured. Let's build a menu
+    #We always have at least 1 location configured (home)
     python:
         menu_items = [
             (loc_name, (latlon, loc_name), False, False)
@@ -274,7 +268,7 @@ label aac_check_weather_elsewhere:
 
     #Handle the final items
     if _return == "edit":
-        #TODO: Edit locs
+        call aac_check_weather_elsewhere_edit_locations
 
         #Now jump back to the top so a location can be selected
         jump aac_check_weather_elsewhere
@@ -339,6 +333,37 @@ label aac_check_weather_elsewhere:
 
     return
 
+label aac_check_weather_elsewhere_edit_locations:
+    #Build menuitems
+    python:
+        menu_items = [
+            (loc_name, loc_name, True, True, False)
+            for loc_name in persistent._aac_stored_locations.keys()
+        ]
+
+        renpy.say(m, "If there's anything you don't want to track anymore, deselect it.")
+
+    call screen mas_check_scrollable_menu(menu_items, mas_ui.SCROLLABLE_MENU_TXT_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, selected_button_prompt="Done", default_button_prompt="Done")
+
+    python:
+        kept_locations = _return.keys()
+
+        #pop all locations not kept
+        for loc in list(persistent._aac_stored_locations.keys()):
+            if loc not in kept_locations:
+                persistent._aac_stored_locations.pop(loc)
+
+    m 1eua "Would you like to add some more locations?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Would you like to add some more locations?{fast}"
+
+        "Yes.":
+            call aac_check_weather_elsewhere_add_location
+
+        "No.":
+            pass
+    return
 
 label aac_check_weather_elsewhere_add_location:
     m "Okay, what city would you like to track?"
@@ -375,7 +400,7 @@ label aac_check_weather_elsewhere_add_location:
 
             show monika 1eua
             #Display our scrollable
-            $ renpy.say(m, "So, which {i}[temp_city]{/i} did you mean??", interact=False)
+            $ renpy.say(m, "So, which {i}[temp_city]{/i} did you mean?", interact=False)
             show monika at t21
             call screen mas_gen_scrollable_menu(found_cities, mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
             show monika at t11
