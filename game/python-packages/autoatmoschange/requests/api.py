@@ -5,7 +5,7 @@ from .types import WeatherInfo, GeoLocation
 WEATHER_INFO_ENDPOINT = "http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={apikey}"
 
 #Geocoder url
-GEOCODE_INFO_ENDPOINT = "http://api.openweathermap.org/geo/1.0/direct?q={cityname}&limit=100&appid={apikey}"
+GEOCODE_INFO_ENDPOINT = "http://api.openweathermap.org/geo/1.0/direct?q={cityname}&limit=15&appid={apikey}"
 
 def fetch_geolocation(cityname: str, apikey: str) -> list[GeoLocation]:
     """

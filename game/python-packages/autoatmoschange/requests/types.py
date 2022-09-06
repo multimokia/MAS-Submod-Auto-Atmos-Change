@@ -332,7 +332,7 @@ class MainWeatherInfo:
         sea_level: float = None,
         grnd_level: float = None
     ):
-        self.feels_like = feels_like
+        self._feels_like = feels_like
         self.pressure = pressure
         self.humidity = humidity
         self._temp = temp
@@ -380,6 +380,19 @@ class MainWeatherInfo:
         """
         return self.__unithandler(unit, self._temp_max)
 
+    def get_feels_like(self, unit: TemperatureUnit=TemperatureUnit.Kelvin) -> float:
+        """
+        Special getter which allows for the customization of temperature units as specified
+
+        IN:
+            unit - a TemperatureUnit value
+                (Default: Kelvin)
+
+        OUT:
+            Temperature in the desired format
+        """
+        return self.__unithandler(unit, self._feels_like)
+
     @staticmethod
     def _kelvin_to_celsius(kelvin: float) -> float:
         return kelvin - 273.15
@@ -400,12 +413,12 @@ class MainWeatherInfo:
         Internal unit handler to convert temperatures
         """
         if unit == TemperatureUnit.Celsius:
-            return MainWeatherInfo._kelvin_to_celsius(temperature_value)
+            return round(MainWeatherInfo._kelvin_to_celsius(temperature_value))
 
         elif unit == TemperatureUnit.Fahrenheit:
-            return MainWeatherInfo._kelvin_to_fahrenheit(temperature_value)
+            return round(MainWeatherInfo._kelvin_to_fahrenheit(temperature_value))
 
-        return temperature_value
+        return round(temperature_value)
 
 @dataclass
 class WindWeatherInfo:

@@ -21,6 +21,8 @@ label awc_monika_player_location:
 
     m 1eksdla "Is it okay if I know your location?{nw}"
     $ _history_list.pop()
+    #Run statechecks here as we need to handle this case
+    $ aac.statemanagement.runStateChecks()
     menu:
         m "Is it okay if I know your location?{fast}"
 
@@ -38,8 +40,16 @@ label awc_monika_player_location:
 
             if not found_cities:
                 m 2rsc "Hmm, I can't seem to find your city..."
-                m 2ekd "I'm sorry [player], I guess this just won't work."
-                m 7eka "Well either way, I'm alright with the normal weather anyway~"
+
+                if (
+                    ((aac.statemanagement.ConnectivityState.AwaitingReconnect | aac.statemanagement.ConnectivityState.Offline)
+                    & aac.globals.current_connectivity_state).value == 0
+                ):
+                    m 2ekd "I think you might have lost connection to the internet, we'll have to try again later..."
+
+                else:
+                    m 2ekd "I'm sorry [player], I guess this just won't work."
+                    m 7eka "Well either way, I'm alright with the normal weather anyway~"
 
             else:
                 if len(found_cities) > 1:
@@ -62,16 +72,16 @@ label awc_monika_player_location:
                     m 1eka "Thanks for sharing where you live with me."
                     $ player_city = found_cities[0][1]
 
-            $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
+                #We should only do this if we're just setting the player location
+                if persistent._aac_player_latlon is None:
+                    $ mas_setEVLPropValues(
+                        "aac_add_more_locations_intro",
+                        conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
+                        action=EV_ACT_QUEUE,
+                        start_date=datetime.date.today() + datetime.timedelta(days=1)
+                    )
 
-            #We should only do this on first viewing of this topic
-            if mas_getEVL_shown_count("awc_monika_player_location") == 0:
-                $ mas_setEVLPropValues(
-                    "aac_add_more_locations_intro",
-                    conditional="mas_hasAPIKey(store.aac.globals.API_FEATURE_KEY)",
-                    action=EV_ACT_QUEUE,
-                    start_date=datetime.date.today() + datetime.timedelta(days=1)
-                )
+                $ persistent._aac_player_latlon = (player_city.lat, player_city.lon)
 
             call aac_monika_player_location_end
 
@@ -147,6 +157,8 @@ label aac_reprompt_location:
             m 7hua "Great, thanks [player]!"
 
             label .enter_city_loop:
+                pass
+
             $ temp_city = renpy.input("So what city do you live in?", length=20).strip(' \t\n\r,').capitalize()
 
             if not temp_city:
@@ -208,9 +220,9 @@ init 5 python:
     )
 
 label aac_add_more_locations_intro:
-    m "You know, [player], I was thinking..."
-    m "I asked you for your location before so that the weather here could be the same as where you are."
-    m "But now that I think about it, maybe sometimes your home isn't the only place you want to be."
+    m 1esc "You know, [player], I was thinking..."
+    m 3ruc "I asked you for your location before so that the weather here could be the same as where you are."
+    m "...But now that I think about it, maybe sometimes your home isn't the only place you want to be."
     m "I might not be able to whisk you away to your dream vacation destination, but we could see what the weather is like there!"
     m "I know, just pretending to be there is a little silly, but I think it would be sort of magical if it was with you."
     m "Just let me know if you'd like to add some locations to the list, okay? They can be anywhere you like."
@@ -223,18 +235,186 @@ init 5 python:
         Event(
             persistent.event_database,
             eventlabel="aac_check_weather_elsewhere",
-            prompt="Can we check the weather in another location?",
+            prompt="What's the weather like at...",
             pool=True,
             rules={"no_unlock": None}
         )
     )
 
-label aac_check_weather_elsewhere:
-    m "Sure!"
+default persistent._aac_stored_locations = dict() #dict[str, tuple(float, float)] | None
 
-    #TODO: This
-    #if there are locations listed
-    m "If there's anything you don't want to track anymore, deselect it."
-    #done
-    m "Do we want to add a new location to track?"
+label aac_check_weather_elsewhere:
+    if not persistent._aac_stored_locations:
+        m 1wuo "Oh!{w=0.2} {nw}"
+        extend 3hksdlb "Looks like we don't have any locations to check..."
+        m 3eua "Why don't we add some?"
+        call aac_check_weather_elsewhere_add_location
+
+    #We have locations configured. Let's build a menu
+    python:
+        menu_items = [
+            (loc_name, (latlon, loc_name), False, False)
+            for loc_name, latlon in persistent._aac_stored_locations.items()
+        ]
+
+        #We always add the home location
+        menu_items.insert(0, ("Home", (persistent._aac_player_latlon, "our home"), False, False))
+
+        final_items = [
+            ("Edit locations", "edit", False, False, 20),
+            ("Nevermind", False, False, False, 0)
+        ]
+
+    show monika 1eua
+    #Display our scrollable
+    $ renpy.say(m, "Where would you like to know the weather at?", interact=False)
+    show monika at t21
+    call screen mas_gen_scrollable_menu(menu_items, mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, *final_items)
+    show monika at t11
+
+    #Handle the final items
+    if _return == "edit":
+        #TODO: Edit locs
+
+        #Now jump back to the top so a location can be selected
+        jump aac_check_weather_elsewhere
+
+
+    elif not _return:
+        m "Alright, [player]."
+        return
+
+    #Run statechecks
+    $ store.aac.statemanagement.runStateChecks()
+
+    #Run a get if we're connected
+    if store.aac.globals.current_connectivity_state == store.aac.statemanagement.ConnectivityState.Connected:
+        python:
+            try:
+                coords, loc_name = _return
+                weath_at_location = aac.utils.getWeatherInfoForLocation(*coords)
+
+            except (aac.utils.requests.ConnectionError, aac.utils.requests.ReadTimeout) as ex:
+                mas_submod_utils.submod_log.error(f"Failed to fetch weath")
+                renpy.jump("aac_check_weather_elsewhere.failed_to_get_result")
+
+            _tempunit = aac.utils.autoatmoschange.requests.types.TemperatureUnit
+            #Let's simplify things for the dialogue line
+            current_temperature = weath_at_location.main.get_temp(
+                _tempunit.Celsius
+            ) #TODO: Unit swapping
+
+            current_feelslike = weath_at_location.main.get_feels_like(
+                _tempunit.Celsius
+            ) #TODO: Units
+
+            current_humidity = weath_at_location.main.humidity
+            current_weath_desc = weath_at_location.weather[0]["description"]
+
+            TEMPERATUREUNIT_TO_STR_UNIT_MAP = {
+                _tempunit.Celsius: "C",
+                _tempunit.Fahrenheit: "F",
+            }
+
+            tempunit = TEMPERATUREUNIT_TO_STR_UNIT_MAP.get(
+                persistent._aac_pm_temperature_unit,
+                TEMPERATUREUNIT_TO_STR_UNIT_MAP[_tempunit.Celsius]
+            )
+
+            #No sense in stating both curr temp and feels like if they're the same.
+            if current_temperature == current_feelslike:
+                temperature_is = f"feels like {current_feelslike}{tempunit}"
+            else:
+                temperature_is = f"is {current_temperature}{tempunit} and feels like {current_feelslike}{tempunit}"
+
+        m "It looks like [loc_name] is getting some [current_weath_desc], the temperature [temperature_is]. Humidity is at [current_humidity] percent."
+
+    else:
+        label .failed_to_get_result:
+            pass
+
+        m "I'm sorry [player], but it looks like I can't reach the internet right now..."
+        m "Let's try again later, okay?"
+        return
+
     return
+
+
+label aac_check_weather_elsewhere_add_location:
+    m "Okay, what city would you like to track?"
+    label .enter_city_loop:
+        pass
+
+    $ temp_city = renpy.input("What city do you want to track?", length=20).strip(' \t\n\r,').capitalize()
+
+    if not temp_city:
+        jump .enter_city_loop
+
+    $ found_cities = aac.utils.buildCityMenuItems(temp_city)
+    $ chosen_city = None #GeoLocation
+
+    if not found_cities:
+        m 2rsc "Hmm, I can't seem to find that city..."
+        m 2eka "Do you want to try another one?{nw}"
+        $ _history_list.pop()
+        menu:
+            m "Do you want to try another one?{fast}"
+
+            "Sure.":
+                jump .enter_city_loop
+
+            "It's alright.":
+                m 7eka "That's alright, [player]."
+                m 2rkd "I'm sorry we couldn't get the city you wanted..."
+                return
+
+    else:
+        if len(found_cities) > 1:
+            m 3hua "Great!"
+            m 3hksdlb "Well, it seems that there's more than one [temp_city] in the world..."
+
+            show monika 1eua
+            #Display our scrollable
+            $ renpy.say(m, "So, which {i}[temp_city]{/i} did you mean??", interact=False)
+            show monika at t21
+            call screen mas_gen_scrollable_menu(found_cities, mas_ui.SCROLLABLE_MENU_TXT_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
+            show monika at t11
+
+            $ chosen_city = _return
+            m 1hua "Got it!"
+
+        else:
+            m 1wud "Oh that makes things easier, there's only one [temp_city]!"
+            $ chosen_city = found_cities[0][1]
+
+        m "Now, what would you like to call this location?"
+
+        #Make sure we're adding new and not overwriting
+        $ done = False
+        while not done:
+            $ loc_name = renpy.input("What would you like to call this location?", length=30).strip(' \t\n\r')
+
+            if not loc_name:
+                pass
+
+            elif loc_name in persistent._aac_stored_locations:
+                m "We already have a location with this name..."
+                m "Try again~"
+
+            else:
+                $ done = True
+                $ persistent._aac_stored_locations[loc_name] = (chosen_city.lat, chosen_city.lon)
+
+        #Check if we want to add more
+        m 1eua "Would you like to add another location?{nw}"
+        $ _history_list.pop()
+        menu:
+            m "Would you like to add another location?{fast}"
+
+            "Sure.":
+                jump .enter_city_loop
+
+            "No thanks.":
+                pass
+
+        return

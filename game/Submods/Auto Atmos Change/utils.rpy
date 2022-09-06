@@ -172,16 +172,22 @@ init -19 python in aac.utils:
 
         ASSUMES: There is an API key registered for the key stored in aac.globals.API_FEATURE_KEY
         """
-        geolocations: list[GeoLocation] = autoatmoschange.requests.api.fetch_geolocation(
-            city_name,
-            store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
-        )
+        try:
+            geolocations: list[GeoLocation] = autoatmoschange.requests.api.fetch_geolocation(
+                city_name,
+                store.mas_getAPIKey(store.aac.globals.API_FEATURE_KEY)
+            )
+
+        #In the case we have no connection here, we should return an empty list
+        except (requests.ConnectionError, requests.ReadTimeout) as ex:
+            store.mas_submod_utils.submod_log.error(f"Failed to fetch geolocation: {ex}")
+            return list()
 
         rv: list[tuple[str, str, bool, bool]] = list()
         #TODO: We'll filter out geolocations which are within 5% of each other
         for geolocation in geolocations:
             rv.append((
-                f"{geolocation.name}, {geolocation.country_name}",
+                f"{geolocation.name}, {geolocation.state}, {geolocation.country_name}",
                 geolocation,
                 False,
                 False
@@ -199,6 +205,10 @@ init -19 python in aac.utils:
 
         OUT:
             WeatherInfo for the weather at the given location
+
+        THROWS:
+            requests.ConnectionError
+            requests.ReadTimeout
         """
         return (
             autoatmoschange.requests.api.fetch_weather_info(
@@ -222,7 +232,6 @@ init -19 python in aac.utils:
         except (requests.ConnectionError, requests.ReadTimeout) as ex:
             store.mas_submod_utils.submod_log.error(f"Failed to getWeatherInfoForLocation: {ex}")
 
-
         return None
 
     def weatherInfoToMASWeather(weath: WeatherInfo | None = None) -> store.MASWeather:
@@ -235,13 +244,14 @@ init -19 python in aac.utils:
 
         OUT:
             MASWeather object representing interpreted weather
-
-        THROWS:
-            requests.ConnectionError
-            requests.Timeout
         """
         if weath is None:
             weath = getCurrentWeather()
+
+        #Since it's possible for getCurrentWeather to return None
+        #As a precaution, we'll return the current weather
+        if weath is None:
+            return store.mas_current_weather
 
         #We only care about the first entry here
         inner_weath = weath.weather[0] #SimpleWeatherInfo
