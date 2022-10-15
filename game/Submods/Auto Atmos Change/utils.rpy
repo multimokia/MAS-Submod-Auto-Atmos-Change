@@ -117,7 +117,7 @@ init -21 python in aac.utils:
         """
         return testURL("http://www.google.com")
 
-    def checkIsinvalidAPIKey(api_key) -> bool:
+    def checkIsInvalidAPIKey(api_key) -> bool:
         """
         Checks if api key is invalid
         NOTE: This checks against London, GB as a known location
@@ -136,6 +136,37 @@ init -21 python in aac.utils:
             ),
             timeout=2
         ).status_code == 401
+
+# Api key screen setup
+init -20 python in aac.utils:
+    import store
+
+    def checkChangedAPIKey(api_key):
+        """
+        Checks if the pasted key is valid
+        NOTE: The key is provided by the api keys screen
+
+        IN:
+            api_key - api key to check
+
+        OUT:
+            - False with no message if no key is provided
+            - False with an error message if the key is invalid
+            - True with no message otherwise
+        """
+        if not api_key:
+            return (False, "")
+
+        if store.aac.utils.checkIsInvalidAPIKey(api_key):
+            return (False, "Key is invalid")
+
+        return (True, "")
+
+    store.mas_registerAPIKey (
+        store.aac.globals.API_FEATURE_KEY,
+        "Auto Atmos Change",
+        on_change=checkChangedAPIKey
+    )
 
 #Helper methods
 init -19 python in aac.utils:

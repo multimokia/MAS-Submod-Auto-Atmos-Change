@@ -59,9 +59,12 @@ label multimokia_auto_atmos_change_v3_0_0(version="v3_0_0"):
 
         #Check if the apikey is invalid
         try:
-            if aac.utils.checkIsinvalidAPIKey(persistent._awc_API_key):
+            if aac.utils.checkIsInvalidAPIKey(persistent._awc_API_key):
                 #Queue a topic saying the player needs to re-add their api key
                 queueEvent("aac_need_readd_apikey")
+            else:
+                store.mas_api_keys.api_keys[store.aac.globals.API_FEATURE_KEY] = persistent._awc_API_key
+                store.mas_api_keys.save_keys()
 
         except (aac.utils.requests.ConnectionError, aac.utils.requests.ReadTimeout) as ex:
             #We can't trust the result here, we don't know if the API key is valid
